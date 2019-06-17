@@ -2,7 +2,7 @@ import shaJs from 'sha.js';
 
 // tslint:disable
 
-export interface Block {
+export interface IBlock {
 	hash: string;
 	index: number;
 	nonce: number;
@@ -10,15 +10,20 @@ export interface Block {
 	timestamp: Date;
 	transactions: any[];
 }
-export interface Transaction {
+export interface ITransaction {
 	amount: number;
 	reciepient: string;
 	sender: string;
 }
 
-class Blockcain {
-	public chain: Block[];
-	public pendingTransactions: Transaction[];
+export interface IHashTransactionInput {
+	pendingTransactions: ITransaction[];
+	index: number;
+}
+
+class Blockchain {
+	public chain: IBlock[];
+	public pendingTransactions: ITransaction[];
 	constructor() {
 		this.chain = [];
 		this.pendingTransactions = [];
@@ -26,8 +31,8 @@ class Blockcain {
 		this.createNewBlock(100, '0', '0');
 	}
 
-	public createNewBlock(nonce: number, hash: string, previousHash: string): Block {
-		const block: Block = {
+	public createNewBlock(nonce: number, hash: string, previousHash: string): IBlock {
+		const block: IBlock = {
 			hash,
 			index: this.chain.length + 1,
 			nonce,
@@ -42,11 +47,11 @@ class Blockcain {
 		return block;
 	}
 
-	public get lastBlock(): Block {
+	public get lastBlock(): IBlock {
 		return this.chain[this.chain.length - 1];
 	}
 
-	public newTransaction(transaction: Transaction): number {
+	public newTransaction(transaction: ITransaction): number {
 		this.pendingTransactions.push(transaction);
 
 		return this.lastBlock.index + 1;
@@ -54,11 +59,8 @@ class Blockcain {
 
 	public hashBlock(
 		previousBlockHash: string,
-		currentTransactions: {
-			pendingTransactions: Transaction[];
-			index: number;
-		},
-		nounce: Block['nonce']
+		currentTransactions: IHashTransactionInput,
+		nounce: IBlock['nonce']
 	): string {
 		const dataString = `
     PH-${previousBlockHash}
@@ -72,10 +74,10 @@ class Blockcain {
 	public proofOfWork(
 		previousBlockHash: string,
 		currentTransactions: {
-			pendingTransactions: Transaction[];
+			pendingTransactions: ITransaction[];
 			index: number;
 		}
-	): Block['nonce'] {
+	): IBlock['nonce'] {
 		let nonce = 0;
 		let hash = this.hashBlock(previousBlockHash, currentTransactions, nonce);
 		while (hash.substr(0, 4) !== '0000') {
@@ -87,4 +89,4 @@ class Blockcain {
 	}
 }
 
-export { Blockcain };
+export { Blockchain };
