@@ -1,4 +1,6 @@
-import { Request, Response } from 'express';
-const getCurrentUrl = (req: Request, _: Response): string => req.url;
+import { Request } from 'express';
+const getCurrentUrl = (req: Request): string =>
+	// combines proto, host, and originalURL
+	`${req.protocol}://${req.get('host')}`;
 
 export { getCurrentUrl };

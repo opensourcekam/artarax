@@ -10,7 +10,6 @@
 		"no-object-mutation": true,
 		"no-delete": true,
 		"no-method-signature": true,
-		"no-mixed-interface": true,
-		"no-if-statement": true
+		"no-mixed-interface": true
 	}
 }

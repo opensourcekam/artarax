@@ -24,9 +24,16 @@ export interface IHashTransactionInput {
 class Blockchain {
 	public chain: IBlock[];
 	public pendingTransactions: ITransaction[];
-	constructor() {
+	public networkNodes: string[];
+	public readonly nodeUrl: string;
+	public readonly nodeAddress: string;
+	constructor({ nodeUrl, nodeAddress }) {
 		this.chain = [];
 		this.pendingTransactions = [];
+		this.networkNodes = [];
+		this.nodeUrl = nodeUrl;
+		this.nodeAddress = nodeAddress;
+
 		// genisis block
 		this.createNewBlock(100, '0', '0');
 	}
