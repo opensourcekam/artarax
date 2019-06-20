@@ -13,10 +13,10 @@ export class Routes {
 				});
 			});
 
-		// Contact
+		// TRANSACTION
 		app.express
 			.route('/transaction')
-			// POST endpoint
+			// POST
 			.post((req: Request, res: Response) => {
 				// Create new contact
 				const { artarax } = req;

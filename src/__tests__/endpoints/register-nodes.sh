@@ -1,0 +1,1 @@
+curl -d '{"allNetworkNodes":["http://localhost:3001", "http://localhost:3000", ":3003","http://localhost:3004","http://localhost:3005"]}' -H "Content-Type: application/json" -X POST http://localhost:3000/register-nodes
