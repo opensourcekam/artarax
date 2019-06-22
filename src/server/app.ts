@@ -1,6 +1,5 @@
 // lib/app.ts
 import uuid from 'uuid';
-
 import * as bodyParser from 'body-parser';
 import express, { NextFunction, Response } from 'express';
 import { Blockchain } from '../lib/blockchain';

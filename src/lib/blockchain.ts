@@ -1,5 +1,5 @@
 import shaJs from 'sha.js';
-
+import uuid from 'uuid';
 // tslint:disable
 
 export interface IBlock {
@@ -11,6 +11,12 @@ export interface IBlock {
 	transactions: any[];
 }
 export interface ITransaction {
+	amount: number;
+	reciepient: string;
+	sender: string;
+	id: string;
+}
+export interface ITransactionInput {
 	amount: number;
 	reciepient: string;
 	sender: string;
@@ -58,9 +64,17 @@ class Blockchain {
 		return this.chain[this.chain.length - 1];
 	}
 
-	public newTransaction(transaction: ITransaction): number {
-		this.pendingTransactions.push(transaction);
+	public newTransaction(transaction: ITransactionInput): ITransaction {
+		return {
+			amount: transaction.amount,
+			sender: transaction.sender,
+			reciepient: transaction.reciepient,
+			id: uuid().split('-').join('')
+		};
+	}
 
+	public addTransactionToPendingTransactions(transaction: ITransaction): number {
+		this.pendingTransactions.push(transaction);
 		return this.lastBlock.index + 1;
 	}
 

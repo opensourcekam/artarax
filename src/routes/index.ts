@@ -19,11 +19,46 @@ export class Routes {
 			// POST
 			.post((req: Request, res: Response) => {
 				// Create new contact
-				const { artarax } = req;
-				const blockIndex = artarax.newTransaction({ ...req.body });
+				const { artarax, body } = req;
+
+				// body is new transaction
+				const blockIndex = artarax.addTransactionToPendingTransactions(body);
 				res.status(200).json({
-					blockIndex
+					blockIndex,
+					data: `Transaction added to block index ${blockIndex}`
 				});
+			});
+		// TRANSACTIONS BROADCAST
+		app.express
+			.route('/transaction/broadcast')
+			// POST
+			.post((req: Request, res: Response) => {
+				const { artarax, body } = req;
+				const { amount, reciepient, sender } = body;
+
+				const newTransaction = artarax.newTransaction({ amount, reciepient, sender });
+				artarax.addTransactionToPendingTransactions(newTransaction);
+
+				const registerNodesPromises: ReadonlyArray<
+					rp.RequestPromise
+				> = artarax.networkNodes.map((networkNodeUrl) =>
+					rp({
+						body: newTransaction,
+						json: true,
+						method: 'POST',
+						uri: `${networkNodeUrl}/transaction`
+					})
+				);
+
+				Promise.all(registerNodesPromises)
+					//
+					.then(() => res.json({ data: 'Broadcast successful!' }))
+					.catch((e) =>
+						res.status(403).json({
+							data: 'something went wrong',
+							error: e
+						})
+					);
 			});
 
 		// MINE

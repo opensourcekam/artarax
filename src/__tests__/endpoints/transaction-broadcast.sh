@@ -1,0 +1,1 @@
+curl -d '{ "amount": 120, "reciepient": "soaidfjsadlk", "sender": "ispadklfjs"}' -H "Content-Type: application/json" -X POST http://localhost:3005/transaction/broadcast
