@@ -44,6 +44,10 @@ class Blockchain {
 		this.createNewBlock(100, '0', '0');
 	}
 
+	public _resetPendingTransactions(): void {
+		this.pendingTransactions = [];
+	}
+
 	public createNewBlock(nonce: number, hash: string, previousHash: string): IBlock {
 		const block: IBlock = {
 			hash,

@@ -1,1 +1,2 @@
-curl -d '{ "amount": 120, "reciepient": "soaidfjsadlk", "sender": "ispadklfjs"}' -H "Content-Type: application/json" -X POST http://localhost:3005/transaction/broadcast
+curl -d '{ "amount": 10, "reciepient": "soaidfjsadlk", "sender": "ispadklfjs"}' -H "Content-Type: application/json" -X POST http://localhost:3003/transaction/broadcast
+curl -d '{ "amount": 1254, "reciepient": "soaidfjsadlk", "sender": "ispadklfjs"}' -H "Content-Type: application/json" -X POST http://localhost:3002/transaction/broadcast

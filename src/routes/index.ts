@@ -1,10 +1,21 @@
 import rp from 'request-promise';
+import { IBlock } from '../lib/blockchain';
 import { Request, Response } from '../types/express';
 
+const ENDPOINTS = {
+	BASE: '/',
+	MINE: '/mine',
+	RECIEVE_NEW_BLOCK: '/recieve-new-block',
+	REGISTER_AND_BROADCAST_NODE: '/register-and-broadcast-node',
+	REGISTER_NODE: '/register-node',
+	REGISTER_NODES: '/register-nodes',
+	TRANSACTION: '/transaction',
+	TRANSACTION_BROADCAST: '/transaction/broadcast'
+};
 export class Routes {
 	public routes(app: any): void {
 		app.express
-			.route('/')
+			.route(ENDPOINTS.BASE)
 			// GET
 			.get((req: Request, res: Response) => {
 				const { artarax } = req;
@@ -15,7 +26,7 @@ export class Routes {
 
 		// TRANSACTION
 		app.express
-			.route('/transaction')
+			.route(ENDPOINTS.TRANSACTION)
 			// POST
 			.post((req: Request, res: Response) => {
 				// Create new contact
@@ -28,9 +39,10 @@ export class Routes {
 					data: `Transaction added to block index ${blockIndex}`
 				});
 			});
+
 		// TRANSACTIONS BROADCAST
 		app.express
-			.route('/transaction/broadcast')
+			.route(ENDPOINTS.TRANSACTION_BROADCAST)
 			// POST
 			.post((req: Request, res: Response) => {
 				const { artarax, body } = req;
@@ -46,7 +58,7 @@ export class Routes {
 						body: newTransaction,
 						json: true,
 						method: 'POST',
-						uri: `${networkNodeUrl}/transaction`
+						uri: `${networkNodeUrl}${ENDPOINTS.TRANSACTION}`
 					})
 				);
 
@@ -61,9 +73,34 @@ export class Routes {
 					);
 			});
 
+		// RECIEVE NEW BLOCK
+		app.express
+			.route(ENDPOINTS.RECIEVE_NEW_BLOCK)
+			// POST
+			.post((req: Request, res: Response) => {
+				const { artarax, body } = req;
+				const { newBlock }: { readonly newBlock: IBlock } = body;
+				const { lastBlock } = artarax;
+				const correctHash = lastBlock.hash === newBlock.previousHash;
+				const correctIndex = lastBlock.index + 1 === newBlock.index;
+
+				if (correctHash && correctIndex) {
+					artarax.chain.push(newBlock);
+					artarax._resetPendingTransactions();
+					res.status(200).json({
+						data: 'Recieve and accepted new block',
+						newBlock
+					});
+				} else {
+					res.status(403).json({
+						data: 'New block rejected'
+					});
+				}
+			});
+
 		// MINE
 		app.express
-			.route('/mine')
+			.route(ENDPOINTS.MINE)
 			// GET
 			.get((req: Request, res: Response) => {
 				const { artarax } = req;
@@ -72,22 +109,50 @@ export class Routes {
 				const blockData = { index: index + 1, pendingTransactions };
 				const nonce = artarax.proofOfWork(previousBlockHash, blockData);
 				const blockHash = artarax.hashBlock(previousBlockHash, blockData, nonce);
-
-				// REWARD BLOCK FOR MINING
-				artarax.newTransaction({
-					amount: 12.5,
-					reciepient: artarax.nodeAddress,
-					sender: '00'
-				});
-
 				const block = artarax.createNewBlock(nonce, blockHash, previousBlockHash);
 
-				res.status(200).json(block);
+				const registerNodesPromises: ReadonlyArray<
+					rp.RequestPromise
+				> = artarax.networkNodes.map((networkNodeUrl) =>
+					rp({
+						body: { newBlock: block },
+						json: true,
+						method: 'POST',
+						uri: `${networkNodeUrl}${ENDPOINTS.RECIEVE_NEW_BLOCK}`
+					})
+				);
+
+				Promise.all(registerNodesPromises)
+					.then(() =>
+						// REWARD BLOCK FOR MINING
+						rp({
+							body: {
+								amount: 12.5,
+								reciepient: artarax.nodeAddress,
+								sender: '00'
+							},
+							json: true,
+							method: 'POST',
+							uri: `${artarax.nodeUrl}${ENDPOINTS.TRANSACTION_BROADCAST}`
+						})
+					)
+					.then(() =>
+						res.status(200).json({
+							block,
+							data: 'New block mined and broadcasted successfully'
+						})
+					)
+					.catch((e) =>
+						res.status(403).json({
+							data: 'something went wrong',
+							error: e
+						})
+					);
 			});
 
 		// BROADCAST TO ALL NODES
 		app.express
-			.route('/register-and-broadcast-node')
+			.route(ENDPOINTS.REGISTER_AND_BROADCAST_NODE)
 			// POST
 			.post((req: Request, res: Response) => {
 				const { artarax, body } = req;
@@ -104,7 +169,7 @@ export class Routes {
 							body: { nodeUrl },
 							json: true,
 							method: 'POST',
-							uri: `${networkNodeUrl}/register-node`
+							uri: `${networkNodeUrl}${ENDPOINTS.REGISTER_NODE}`
 						})
 					);
 
@@ -114,7 +179,7 @@ export class Routes {
 							body: { allNetworkNodes: [ ...artarax.networkNodes, artarax.nodeUrl ] },
 							json: true,
 							method: 'POST',
-							uri: `${nodeUrl}/register-nodes`
+							uri: `${nodeUrl}${ENDPOINTS.REGISTER_NODES}`
 						})
 					)
 					.then(() => res.json({ data: 'New node registered with network' }));
@@ -122,7 +187,7 @@ export class Routes {
 
 		// REGISTER
 		app.express
-			.route('/register-node')
+			.route(ENDPOINTS.REGISTER_NODE)
 			// POST
 			.post((req: Request, res: Response) => {
 				// tslint:disable-next-line: no-console
@@ -141,7 +206,7 @@ export class Routes {
 
 		// REGISTER MANY NODES
 		app.express
-			.route('/register-nodes')
+			.route(ENDPOINTS.REGISTER_NODES)
 			// POST
 			.post((req: Request, res: Response) => {
 				const { artarax, body } = req;
