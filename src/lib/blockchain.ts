@@ -112,6 +112,38 @@ class Blockchain {
 
 		return nonce;
 	}
+
+	public chainIsValid(blockchain: Blockchain['chain']): boolean {
+		const genisisBlock = blockchain[0];
+		const correctNonce = genisisBlock.nonce === 100;
+		const correctPreviousHash = genisisBlock.previousHash === '0';
+		const correctHash = genisisBlock.hash === '0';
+		const correctTransactions = genisisBlock.transactions.length === 0;
+
+		if (!correctNonce || !correctPreviousHash || !correctHash || !correctTransactions) {
+			return false;
+		}
+
+		for (let i = 1; i < blockchain.length; i++) {
+			const currentBlock = blockchain[i];
+			const previousBlock = blockchain[i - 1];
+			const blockHash = this.hashBlock(
+				previousBlock.hash,
+				{ pendingTransactions: currentBlock.transactions, index: currentBlock.index },
+				currentBlock.nonce
+			);
+
+			if (blockHash.substr(0, 4) !== '0000') {
+				return false;
+			}
+
+			if (currentBlock.previousHash !== previousBlock.hash) {
+				return false;
+			}
+		}
+
+		return true;
+	}
 }
 
 export { Blockchain };
